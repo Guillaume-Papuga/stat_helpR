@@ -17,3 +17,9 @@ callout-blocks
 sharing-your-book
 publishing
 pages
+url-your-book-url-like-httpsbookdown.orgyihuibookdown
+chapters-and-sub-chapters
+captioned-figures-and-tables
+footnotes-and-citations
+theorems-and-proofs
+metadata-for-sharing
