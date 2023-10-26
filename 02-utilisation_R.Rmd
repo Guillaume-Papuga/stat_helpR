@@ -2,3 +2,19 @@
     • Couleurs (RColorBrewer)
     • Fonctionnement (parallèle sur des cœurs différents)
     • GitHub
+
+
+## Packages
+
+```{r}
+old_packages <- installed.packages(lib.loc = "/home/papuga/R/x86_64-pc-linux-gnu-library/3.6/")
+head(old_packages[, 1])
+
+new_packages <- installed.packages()
+missing_packages <- as.data.frame(old_packages[
+!old_packages[, "Package"] %in% new_packages[, "Package"],
+])
+
+
+```
+

@@ -8,5 +8,376 @@
     • CAH
     • KMeans
     • Discriminantes
+    
+```{r}
+#########################
+# Tutoriel : l'Analyse discriminante
+# Guillaume Papuga
+# 27.02.17
+#########################
+
+# Ce script crée une trame d'analyse autour de l'analyse discriminante & ses tests associés
+# Le jeu de données principalement utilisé est celui des Iris de Fisher
+# iris is a data frame with 150 cases (rows) and 5 variables (columns) named Sepal.Length, Sepal.Width, Petal.Length, Petal.Width, and Species.
+# Les sources ayant permis la réalisation de ce document sont
+  # - le cours de l'univeristé de Lyon [tdr63b by A.B. Dufour, D. Chessel & J.R. Lobry]
+  # - tutorial by the University of Massachusetts Amherst
+  # - tutorial on PLS DA by Maxime Hervé
+
+# Its structure is based on the tutorial by the Universit of Massachusetts
+
+
+#######
+# I. Are groups significantly different? statistical tests
+#######
+
+####
+# I.1. MANOVA [Manova]
+####
+
+size <- as.matrix(iris[,1:4])
+spec <- iris[,5]
+m1 <- manova(size~spec)
+summary(m1,test="Pillai")
+summary(m1,test="Wilks")
+summary(m1,test="Hotelling-Lawley")
+summary(m1,test="Roy")
+
+# package VEGAN is required for those tests
+require(vegan)
+
+####
+# I.1. Multivariate Analysis of Variance [(NP)MANOVA]
+####
+# based on the analysis and partitioning sums of square distances (Anderson 2001).
+# the probability of an F-ratio this large or larger through Monte carlo permutations.
+
+--------------------##########--------------------
+
+## a. A simple exemple (independant samples)
+adonis2 (iris [,1:4] ~ iris [,5], permutations = 999, method = "bray") # method specify the distance matrix
+
+--------------------##########--------------------
+
+## b. A complex exemple: use with strata, for nested designs.
+dat <- expand.grid(rep=gl(2,1), NO3=factor(c(0,10)),field=gl(3,1) ) # three field, each with two treatments (NO3 = 0 and NO3 = 10) and two replicates per treatment
+dat
+Agropyron <- with(dat, as.numeric(field) + as.numeric(NO3)+2) +rnorm(12)/2 # create a variable for Agropyron abundance using NO3 and field + a normal distribution
+Schizachyrium <- with(dat, as.numeric(field) - as.numeric(NO3)+2) +rnorm(12)/2 # similar but different effect on the "species"
+total <- Agropyron + Schizachyrium
+dotplot(total ~ NO3, dat, jitter.x=TRUE, groups=field,
+        type=c('p','a'), xlab="NO3", auto.key=list(columns=3, lines=TRUE) ) # graphic de l'abundance total de veget dans chacun des champs
+# [contrasted results : positive trend in field 1, negative trend in field 2 & 3 = suspect an effect of the field]
+
+# nMDS
+Y <- data.frame(Agropyron, Schizachyrium) # dataframe of the abundance of the two species
+mod <- metaMDS(Y) # perform an NMDS
+plot(mod) # plot the result of the NMDS
+
+with(dat, ordiellipse(mod, field, kind = "ehull", label = TRUE)) # Ellipsoid hulls show treatment (field)
+with(dat, ordispider(mod, field, lty=3, col="red")) # Spider shows fields
+with(dat, ordiellipse(mod, NO3, kind = "ehull", label = TRUE)) # Ellipsoid hulls show treatment (field)
+
+## Simple npMANOVA with no structure
+perm <- how(nperm = 199) # 199 permutation with no structure
+adonis2 (Y ~ NO3, data = dat, permutations = perm) # effect of NO3 on the abundance of the 2 species 
+# the test is incorrect because there is no strata = no structure for the nested design
+
+## Correct with strata
+setBlocks(perm) <- with(dat, field) # 199 permutation with nested design
+adonis2(Y ~ NO3, data = dat, permutations = perm)
+
+
+####
+# I.2. Multi-Response Permutation Procedures [MRPP]
+####
+# Nonparametric procedure for testing the hypothesisof no difference between two or more groups ofentities based on permutation test of among- andwithin-group dissimilarities (Mielke 1984, 1991)
+# Euclidean distance generally recommended, although other vegdist methods can be computed
+
+## a. A simple example
+iris.mrpp = mrpp(dat = iris [,1:4], grouping = iris [,5])
+iris.mrpp
+
+## b. Graphic representation
+
+# nMDS
+plot(iris.ord <- metaMDS(iris [,1:4]), type="text", display="sites" ) # plot the nMDS
+with(iris, ordihull(iris.ord, Species)) # add Convex Hull 
+
+# Representation of Delta
+with(iris.mrpp, {
+  fig.dist <- hist(boot.deltas, xlim=range(c(delta,boot.deltas)), 
+                   main="Test of Differences Among Groups")
+  abline(v=delta); 
+  text(delta, 2*mean(fig.dist$counts), adj = -0.5,
+       expression(bold(delta)), cex=1.5 )  }
+)
+
+
+# meandist
+iris.md <- with(iris, meandist(vegdist(iris [,1:4]), Species))
+iris.md
+summary(iris.md)
+plot(iris.md)
+plot(iris.md, kind="histogram")
+
+
+####
+# I.3. Analysis of Group Similarities [ANOSIM]
+####
+# Nonparametric procedure for testing the hypothesis of
+# no difference between two or more groups of entities
+# based on permutation test of among- and within-group
+# similarities (Clark 1993).
+
+# Determine the probability of an R this large or larger through Monte carlo permutations.
+
+iris.ano = anosim (dat = iris [,1:4], grouping = iris$Species, permutations = 999, distance = "bray") # use distances of vegdist
+# there is a possibility to set up a block design with parameter " strata "
+iris.ano
+plot(iris.ano) # graphic of some kind of variance
+
+####
+# I.4. Mantel’s Test [MANTEL]
+####
+# Mantel statistic tests for differences between two
+# distance matrices (e.g., between ecological and
+# geographic distances between points), but can also
+# be used to test for differences among groups.
+
+# >> Note, if ecological distances are rank transformed, this test is the same as ANOSIM and similar to rank-transformed MRPP
+
+# with iris dataset, euclidean distance
+# looking for a correlation between true distances (from Iris dataset) and the same matrix (ind * ind) with grouping (1 or 0) in the tab
+xdist = vegdist(scale(iris[,1:4]), "euclid") # première matrice
+ydist = model.matrix( ~ Species - 1, data=iris )
+
+mantel(xdis = xdist, ydis = ydist)
+
+
+
+
+
+#######
+# II. How do groups differ? finding variables that best distinguish among groups
+#######
+
+
+####
+# II.1. Discriminant Analysis [DA]
+####
+
+############# Comments #############
+# LDA n’est valide que s’il y a bien plus d’individus que de variables explicatives (*5)
+
+
+## II.1.a. Looking for variables - data mining
+
+## graph of individual traits
+par(mfcol=c(3,4))
+for (k in 1:4) {
+  j0 <- names(iris)[k]
+  br0 <- seq(min(iris[,k]),max(iris[,k]),le=11)
+  x0 <- seq(min(iris[,k]),max(iris[,k]),le=50)
+  for (i in 1:3) {
+    i0 <- levels(iris$Species)[i]
+    x <- iris[iris$Species==i0,j0]
+    hist(x,br=br0,proba=T,col=grey(0.8), main=i0,xlab=j0)
+    lines(x0,dnorm(x0,mean(x),sd(x)),col="red",lwd=2)
+  }
+}
+
+
+## Approche bivariée
+# les moyennes par groupe
+tapply(iris$Sepal.Length,iris$Species,mean)
+# les ecarts-type par groupe
+tapply(iris$Sepal.Length,iris$Species,sd)
+# l'analyse de la variance a un facteur
+options(show.signif.stars=T)
+anova(lm(iris$Sepal.Length~iris$Species))
+
+## Approche bivariee (all bivariate clouds)
+library(ade4)
+library(adegraphics)
+s.class(iris[,1:4], iris$Species, xax=1:4, yax=1:4, porigin.include=FALSE,
+        plabels.cex=1.5, col=c("blue","black","red"), ppoints.cex=1, starSize=0.5)
+
+--------------------##########--------------------
+  
+## II.1.b. Discriminant analysis
+apply(iris[,1:4],2,function(x) summary (lm(x~iris[,5])))  # fit a linear model to investigate whether modalities of variables are different
+
+# using lda from MASS
+lda1 <- lda(as.matrix(iris[,1:4]),iris$Species)
+lda1
+
+# using discrimin from ADE4
+dis1 <- discrimin(dudi.pca(iris[,1:4],scan=F),iris$Species,scan=F)
+dis1
+plot(randtest(dis1)) 
+
+--------------------##########--------------------
+
+##.1.c. Predictive VS Descriptive discriminant analysis
+# split the Iris database in 2
+echa <- sample(1:150,50)
+tabref <- iris[echa,1:4] # selection de 50 iris
+espref <- iris[echa,5] # noms d'especes de la selection
+tabsup <- iris[-echa,1:4] # tableau des 100 autres
+espsup <- iris[-echa,5] # nom de l'espece des 100 autres
+lda2 <- lda(tabref,espref) # analyse discriminante sur les subset de 50 individus
+lda2
+
+# predict the species using function "predict
+espestim <- predict(lda2,tabsup)$class # fonction generique utilise predict.lda
+table(espestim,espsup)
+
+####
+# II.2. Partial Least Square Discriminant Analysis [PLS-DA]
+####
+require (mixOmics)
+require (RVAideMemoire)
+
+data(yeast)
+# En PLSR, les variables explicatives sont réunies dans une matrice nommée X 
+# tandis que les variables à expliquer sont réunies dans une matrice nommée Y (matrice des variables indicatrices issues du facteur)
+# dans les deux cas on a un individu par ligne et une variable par colonne
+
+X <- t(yeast$data)
+Y <- yeast$strain.cond
+modele <- plsda(X=X,Y=Y) # utiliser ncomp=k avec k composantes à retenir
+
+# représente la PLS DA
+s.class(modele$variates$X,fac=Y,col=rainbow(nlevels(Y)),cellipse=0)
+# >> What's in it?
+# modele$variates$X : tableau où sont stockées les coordonnées de chaque individu sur les différents axes
+# fac : facteur contenant les groupes à représenter
+# col : vecteur contenant une couleur par groupe
+# cellipse=0 : on ne trace pas le contour des ellipses des
+
+MVA.cv(X = X, Y = Y, repet = 10, k = 7, model = "PLS-DA")
+MVA.test(X = X, Y = Y)
+
+DA.var(modele)
+MVA.synt(modele)
+
+
+PLSDA.VIP(modele)
+
+corr <- cor(modele$X,modele$variates$X,use="pairwise")
+s.corcircle(corr,clab=0.7)
+VIP <- PLSDA.VIP(modele)
+VIP$sup1
+s.corcircle(corr[VIP$sup1,],clab=0.7)
+
+mvr(X=X,Y=Y)
+
+
+##### PLS DA deuxième essai
+tableau<-as.matrix(X)
+var.ind<-dummy(Y,simplify=F)
+nb = length(unique(Y)) - 1
+PLSDA<-cppls(var.ind ~ tableau, ncomp= nb)
+
+#1. Qualité de l'analyse
+quality = MVA.cmv(tableau,Y,model="PPLS-DA",crit.inn="NMC")
+quality
+
+# 2. test
+MVA.test(tableau,Y,model="PPLS-DA",cmv=TRUE)
+pairwise.MVA.test(tableau,Y,model="PPLS-DA",cmv=TRUE) # compare toutes les combinaisons = good posthoc
+
+# 3. representation graphique
+# 3a. individus
+MVA.plot(PLSDA,fac=facteur)
+?MVA.scoreplot
+
+# 3b. variables
+MVA.plot(PLSDA,"corr")
+
+
+#### 
+# PLSDA avec le package "caret"
+
+
+
+
+#####
+# PLSDA avec mixOmics
+## First example
+data(breast.tumors)
+X <- breast.tumors$gene.exp
+Y <- breast.tumors$sample$treatment
+
+plsda.breast <- plsda(X, Y, ncomp = 2)
+palette(c("red", "blue"))
+col.breast <- as.numeric(as.factor(Y))
+plotIndiv(plsda.breast, ind.names = TRUE, col = col.breast)
+legend('bottomleft', c("After", "Before"), pch = c(16, 16), 
+       col = unique(col.breast), cex = 1, pt.cex = c(1.2, 1.2), 
+       title = "Treatment")
+palette("default")
+
+## Second example
+data(liver.toxicity)
+X <- liver.toxicity$gene
+Y <- liver.toxicity$treatment[, 4]
+
+plsda.liver <- plsda(X, Y, ncomp = 2)
+col.rat <- as.numeric(as.factor(Y))
+plotIndiv(plsda.liver, col = col.rat, ind.names = Y)
+
+
+####
+# II.3. Other methods
+####
+# Classification and Regression Trees [CART]
+# Logistic Regression [LR]
+# Indicator Species Analysis [ISA]
+```
+
+
+
     • Quelques tests
     • Couplage de tableaux
+
+## ToDo
+multi-dimensional scaling (MDS) with ANOSIM,using similarity matrices based on the BrayeCurtis similarity coefficient  
+
+
+```{r best cutree}
+    best.cutree <- function(hc, min=2, max=40, loss=FALSE, graph=FALSE, ...){
+      if (class(hc)!="hclust") hc <- as.hclust(hc)
+      max <- min(max, length(hc$height))
+      inert.gain <- rev(hc$height)
+      intra <- rev(cumsum(rev(inert.gain)))
+      relative.loss = intra[min:(max)]/intra[(min - 1):(max - 1)]
+      best = which.min(relative.loss)
+      names(relative.loss) <- min:max
+      if (graph) {
+        temp <- relative.loss
+        temp[best] <- NA
+        best2 <- which.min(temp)
+        pch <- rep(1, max-min+1)
+        pch[best] <- 16
+        pch[best2] <- 21
+        plot(min:max, relative.loss, pch=pch, bg="grey75", ...)
+      } else {
+        if (loss)
+          relative.loss
+        else
+          best + min - 1
+      }
+    }
+
+
+> best.cutree(arbre)
+
+
+> best.cutree(arbre,loss=TRUE)
+
+
+> best.cutree(arbre,graph=TRUE)
+```
+
