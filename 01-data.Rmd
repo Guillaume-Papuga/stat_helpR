@@ -1,0 +1,27 @@
+# Gestion des données
+
+## Les données sur R
+
+
+## Les jeux de données utilisés 
+        ◦ Via R
+        ◦ Perso en ligne sur le repo
+        ◦ JDD packages
+        ◦ Comment simuler un jdd?
+            Lois 
+            Random 
+
+## Les fonctions de base
+
+
+## Créer une fonction
+
+
+
+## Data manipulation
+        ◦ Apply
+        ◦ For
+        ◦ Suite Tidy
+
+
+## Ma structure d’analyse (workflow)
