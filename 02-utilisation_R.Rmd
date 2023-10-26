@@ -1,0 +1,4 @@
+# Utilisation de R
+    • Couleurs (RColorBrewer)
+    • Fonctionnement (parallèle sur des cœurs différents)
+    • GitHub

@@ -1,0 +1,10 @@
+# Analyses spatiales
+    • Représentations spatiales
+        ◦ Données en ligne
+        ◦ Iintégrer des données
+            ▪ Raster
+            ▪ vecteurs
+    • Operations basiques d’analyse spatiale
+        ◦ Density kernel
+        ◦ Spatial regression
+    • Détecter l’autocorrélation spatiale

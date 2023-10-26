@@ -1,0 +1,12 @@
+# Statistiques multivariées
+    • Introduction
+    • Les matrices de distance
+    • Analyses Descriptive
+        ◦ AFC 
+        ◦ ACPP
+        ◦ Nmds
+    • CAH
+    • KMeans
+    • Discriminantes
+    • Quelques tests
+    • Couplage de tableaux

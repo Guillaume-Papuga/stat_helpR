@@ -1,0 +1,6 @@
+# Le modèle mixte
+    • Effet mixtes (random y, random slope)
+    • comment ecrire le modèle
+    • Exemple sur loi normale
+    • Exemple sur loi poisson
+    • Exemple sur loi binomiale

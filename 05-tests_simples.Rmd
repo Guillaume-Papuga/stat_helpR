@@ -1,0 +1,15 @@
+# Test simples
+    • Tester la normalité
+    • Variances
+    • Paramétriques
+    
+Les différentes anova
+
+    • Non paramétriques
+    • Autre, Chi2, etc. 
+    • Tester la corrélation entre variables
+        ◦ Pearson
+        ◦ Spearman
+
+Inférences
+    • bootstrap

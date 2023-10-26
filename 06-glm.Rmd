@@ -1,0 +1,17 @@
+# Le modèle linéaire généralisé
+
+
+Introduction
+        ◦ Lien (quasi)
+    • Modèle linéaire simple (lm)
+        ◦ Comment ecrire un modèle
+    • Introduction au GLM
+    • GLM sur données de comptage
+    • GLM sur loi binomiale 
+        ◦ Données présence absence
+            ▪ Fit
+            ▪ validation
+        ◦ sur proportion
+    • Transformation des variables
+
+Les contrastes

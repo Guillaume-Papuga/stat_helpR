@@ -1,0 +1,6 @@
+# SDM
+
+        ◦ Les différents algorithmes 
+        ◦ Modèle averaging
+    • jointSDM
+

@@ -1,0 +1,7 @@
+# Data mining 
+
+Décrire les données (pas de stat) représentation graphiques
+    • Package de data mining
+    • Matrix of scatter plot
+    • Scatter plot 3D et interactif
+    • GGplot2

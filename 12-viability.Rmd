@@ -1,0 +1,6 @@
+# Analyse de viabilité des populations chez les plantes
+    • Introduction : la question du type de données
+    • Matrice classique
+    • Lme avec structuration temporelle (données comptages)
+    • Lme avec structuration temporelle (données p/a)
+    • 
